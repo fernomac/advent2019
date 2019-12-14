@@ -6,35 +6,38 @@ import (
 	"strings"
 )
 
-// An Intcode program.
-type Intcode []int
+// A Program written in Intcode.
+type Program []int
 
-// LoadIntcode loads an intcode program from a file.
-func LoadIntcode(filename string) Intcode {
+// LoadProgram loads an intcode program from a file.
+func LoadProgram(filename string) Program {
 	file := strings.TrimSpace(Load(filename))
 	nums := strings.Split(file, ",")
 
-	mem := make([]int, len(nums))
+	prog := make([]int, len(nums))
 	for i, num := range nums {
 		n, err := strconv.Atoi(num)
 		if err != nil {
 			panic(err)
 		}
-		mem[i] = n
+		prog[i] = n
 	}
 
-	return mem
+	return prog
 }
 
 // A Puter is an intcode computer.
 type Puter struct {
 	mem []int
 	ip  int
+
+	stdin  []int
+	stdout []int
 }
 
 // NewPuter creates a new Puter.
-func NewPuter(program Intcode) *Puter {
-	return &Puter{mem: append([]int{}, program...)}
+func NewPuter(prog Program) *Puter {
+	return &Puter{mem: append([]int{}, prog...)}
 }
 
 // Read reads a value from memory.
@@ -47,6 +50,16 @@ func (p *Puter) Write(n, val int) {
 	p.mem[n] = val
 }
 
+// Stdin sets the computer's input stream.
+func (p *Puter) Stdin(stdin []int) {
+	p.stdin = stdin
+}
+
+// Stdout returns the computer's output stream.
+func (p *Puter) Stdout() []int {
+	return p.stdout
+}
+
 // Run runs the intcode program.
 func (p *Puter) Run() {
 	for p.Step() {
@@ -54,45 +67,42 @@ func (p *Puter) Run() {
 	}
 }
 
-var opcodes = func() map[int]func(*Puter) bool {
-	return map[int]func(p *Puter) bool{
-		1:  (*Puter).add,
-		2:  (*Puter).mult,
-		99: func(p *Puter) bool { return false },
-	}
-}()
-
-// Step steps the intcode program forward on instruction.
+// Step steps the intcode program forward one instruction.
 func (p *Puter) Step() bool {
-	opcode := p.mem[p.ip]
+	opcode, modes := decode(p.mem[p.ip])
+	if opcode == 99 {
+		// We're done.
+		return false
+	}
+
 	op, ok := opcodes[opcode]
 	if !ok {
 		panic(fmt.Sprintf("invalid instruction %v at position %v", opcode, p.ip))
 	}
-
-	return op(p)
-}
-
-func (p *Puter) add() bool {
-	return p.math(func(a, b int) int { return a + b })
-}
-
-func (p *Puter) mult() bool {
-	return p.math(func(a, b int) int { return a * b })
-}
-
-func (p *Puter) math(f func(int, int) int) bool {
-	arg1 := p.mem[p.ip+1]
-	arg2 := p.mem[p.ip+2]
-	arg3 := p.mem[p.ip+3]
-
-	lhs := p.mem[arg1]
-	rhs := p.mem[arg2]
-
-	res := f(lhs, rhs)
-
-	p.mem[arg3] = res
-	p.ip += 4
+	op(p, modes)
 
 	return true
+}
+
+func decode(raw int) (int, modeset) {
+	high := raw / 100
+	low := raw % 100
+	return low, modeset(high)
+}
+
+type mode uint8
+
+const (
+	immediateMode mode = 1
+	positionMode  mode = 0
+)
+
+type modeset int
+
+func (m modeset) get(n int) mode {
+	temp := int(m)
+	if n > 0 {
+		temp /= (n * 10)
+	}
+	return mode(temp % 10)
 }

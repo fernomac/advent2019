@@ -6,7 +6,7 @@ import (
 	"github.com/fernomac/advent2019/lib"
 )
 
-var code = lib.LoadIntcode("input.txt")
+var code = lib.LoadProgram("input.txt")
 
 func compute(noun, verb int) int {
 	p := lib.NewPuter(code)

@@ -5,16 +5,14 @@ import (
 	"testing"
 )
 
-func TestPuter(t *testing.T) {
+func TestMath(t *testing.T) {
 	test := func(mem []int, eval []int) {
 		t.Run(fmt.Sprintf("%v", mem), func(t *testing.T) {
 			p := Puter{mem: mem}
 			p.Run()
 
-			for i := range eval {
-				if p.mem[i] != eval[i] {
-					t.Fatalf("expected %v, got %v", eval, p.mem)
-				}
+			if !equals(p.mem, eval) {
+				t.Fatalf("expected %v, got %v", eval, p.mem)
 			}
 		})
 	}
@@ -23,4 +21,70 @@ func TestPuter(t *testing.T) {
 	test([]int{2, 3, 0, 3, 99}, []int{2, 3, 0, 6, 99})
 	test([]int{2, 4, 4, 5, 99, 0}, []int{2, 4, 4, 5, 99, 9801})
 	test([]int{1, 1, 1, 4, 99, 5, 6, 0, 99}, []int{30, 1, 1, 4, 2, 5, 6, 0, 99})
+}
+
+func TestIO(t *testing.T) {
+	testPuter(t, []int{3, 0, 4, 0, 99}, []int{42}, []int{42})
+	testPuter(t, []int{104, 420, 99}, nil, []int{420})
+	testPuter(t, []int{1002, 6, 3, 6, 4, 6, 33}, nil, []int{99})
+	testPuter(t, []int{1101, 100, -1, 4, 0}, nil, nil)
+}
+
+func TestLTEQ(t *testing.T) {
+	testPuter(t, []int{3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8}, []int{7}, []int{1})
+	testPuter(t, []int{3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8}, []int{8}, []int{0})
+	testPuter(t, []int{3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8}, []int{9}, []int{0})
+
+	testPuter(t, []int{3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8}, []int{7}, []int{0})
+	testPuter(t, []int{3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8}, []int{8}, []int{1})
+	testPuter(t, []int{3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8}, []int{9}, []int{0})
+
+	testPuter(t, []int{3, 3, 1107, -1, 8, 3, 4, 3, 99}, []int{7}, []int{1})
+	testPuter(t, []int{3, 3, 1107, -1, 8, 3, 4, 3, 99}, []int{8}, []int{0})
+	testPuter(t, []int{3, 3, 1107, -1, 8, 3, 4, 3, 99}, []int{9}, []int{0})
+
+	testPuter(t, []int{3, 3, 1108, -1, 8, 3, 4, 3, 99}, []int{7}, []int{0})
+	testPuter(t, []int{3, 3, 1108, -1, 8, 3, 4, 3, 99}, []int{8}, []int{1})
+	testPuter(t, []int{3, 3, 1108, -1, 8, 3, 4, 3, 99}, []int{9}, []int{0})
+}
+
+func TestJumps(t *testing.T) {
+	testPuter(t, []int{3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9}, []int{0}, []int{0})
+	testPuter(t, []int{3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9}, []int{42}, []int{1})
+
+	testPuter(t, []int{3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1}, []int{0}, []int{0})
+	testPuter(t, []int{3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1}, []int{42}, []int{1})
+
+	prog := []int{3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0,
+		36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000,
+		1, 20, 4, 20, 1105, 1, 46, 98, 99}
+
+	testPuter(t, prog, []int{7}, []int{999})
+	testPuter(t, prog, []int{8}, []int{1000})
+	testPuter(t, prog, []int{9}, []int{1001})
+}
+
+func testPuter(t *testing.T, mem []int, stdin []int, eval []int) {
+	t.Run(fmt.Sprintf("%v", mem), func(t *testing.T) {
+		p := Puter{mem: mem, stdin: stdin}
+		p.Run()
+
+		if !equals(p.stdout, eval) {
+			t.Fatalf("expected %v, got %v", eval, p.stdout)
+		}
+	})
+}
+
+func equals(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
 }
