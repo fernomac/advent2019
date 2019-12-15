@@ -17,6 +17,8 @@ var opcodes = func() map[int]op {
 		6: (*Puter).jz,
 		7: (*Puter).lt,
 		8: (*Puter).eq,
+
+		99: (*Puter).hcf,
 	}
 }()
 
@@ -45,8 +47,20 @@ func (p *Puter) mult(modes modeset) {
 }
 
 func (p *Puter) in(modes modeset) {
-	in := p.stdin[0]
-	p.stdin = p.stdin[1:]
+	var in int
+
+	if p.blocking {
+		in = <-p.stdin
+	} else {
+		select {
+		case try := <-p.stdin:
+			in = try
+
+		default:
+			p.state = blocked
+			return
+		}
+	}
 
 	p.writearg(0, modes, in)
 	p.ip += 2
@@ -55,7 +69,12 @@ func (p *Puter) in(modes modeset) {
 func (p *Puter) out(modes modeset) {
 	out := p.readarg(0, modes)
 
-	p.stdout = append(p.stdout, out)
+	if p.stdout != nil {
+		p.stdout <- out
+	} else {
+		p.stdoutbuf = append(p.stdoutbuf, out)
+	}
+
 	p.ip += 2
 }
 
@@ -103,6 +122,10 @@ func (p *Puter) eq(modes modeset) {
 
 	p.writearg(2, modes, res)
 	p.ip += 4
+}
+
+func (p *Puter) hcf(modes modeset) {
+	p.state = done
 }
 
 //

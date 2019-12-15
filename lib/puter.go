@@ -26,18 +26,34 @@ func LoadProgram(filename string) Program {
 	return prog
 }
 
+type cpustate uint8
+
+const (
+	initial cpustate = iota
+	running
+	blocked
+	done
+)
+
 // A Puter is an intcode computer.
 type Puter struct {
 	mem []int
 	ip  int
 
-	stdin  []int
-	stdout []int
+	state    cpustate
+	blocking bool
+
+	stdin     <-chan int
+	stdout    chan<- int
+	stdoutbuf []int
 }
 
 // NewPuter creates a new Puter.
 func NewPuter(prog Program) *Puter {
-	return &Puter{mem: append([]int{}, prog...)}
+	return &Puter{
+		mem:   append([]int{}, prog...),
+		state: initial,
+	}
 }
 
 // Read reads a value from memory.
@@ -52,36 +68,62 @@ func (p *Puter) Write(n, val int) {
 
 // Stdin sets the computer's input stream.
 func (p *Puter) Stdin(stdin []int) {
-	p.stdin = stdin
+	ch := make(chan int, len(stdin))
+	for _, i := range stdin {
+		ch <- i
+	}
+	p.stdin = ch
 }
 
 // Stdout returns the computer's output stream.
 func (p *Puter) Stdout() []int {
-	return p.stdout
+	if p.stdout != nil {
+		panic("stdout not buffered")
+	}
+	return p.stdoutbuf
 }
 
-// Run runs the intcode program.
+// StdinCh sets the computer's input stream as a channel.
+func (p *Puter) StdinCh(ch <-chan int) {
+	p.stdin = ch
+}
+
+// StdoutCh sets this puter's stdout channel.
+func (p *Puter) StdoutCh(ch chan<- int) {
+	p.stdout = ch
+}
+
+// Run runs the intcode program until it quits.
 func (p *Puter) Run() {
-	for p.Step() {
-		// keep going.
+	if !p.run(true) {
+		panic("run(true) returned false")
 	}
 }
 
-// Step steps the intcode program forward one instruction.
-func (p *Puter) Step() bool {
-	opcode, modes := decode(p.mem[p.ip])
-	if opcode == 99 {
-		// We're done.
-		return false
+// RunNB runs the intcode program until it either quits or needs more input.
+func (p *Puter) RunNB() bool {
+	return p.run(false)
+}
+
+func (p *Puter) run(blocking bool) bool {
+	p.blocking = blocking
+	p.state = running
+
+	for p.state == running {
+		p.step()
 	}
+
+	return p.state == done
+}
+
+func (p *Puter) step() {
+	opcode, modes := decode(p.mem[p.ip])
 
 	op, ok := opcodes[opcode]
 	if !ok {
 		panic(fmt.Sprintf("invalid instruction %v at position %v", opcode, p.ip))
 	}
 	op(p, modes)
-
-	return true
 }
 
 func decode(raw int) (int, modeset) {

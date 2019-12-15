@@ -8,10 +8,10 @@ import (
 func TestMath(t *testing.T) {
 	test := func(mem []int, eval []int) {
 		t.Run(fmt.Sprintf("%v", mem), func(t *testing.T) {
-			p := Puter{mem: mem}
+			p := NewPuter(mem)
 			p.Run()
 
-			if !equals(p.mem, eval) {
+			if !IntEq(p.mem, eval) {
 				t.Fatalf("expected %v, got %v", eval, p.mem)
 			}
 		})
@@ -28,6 +28,27 @@ func TestIO(t *testing.T) {
 	testPuter(t, []int{104, 420, 99}, nil, []int{420})
 	testPuter(t, []int{1002, 6, 3, 6, 4, 6, 33}, nil, []int{99})
 	testPuter(t, []int{1101, 100, -1, 4, 0}, nil, nil)
+}
+
+func TestNBIO(t *testing.T) {
+	p := NewPuter([]int{3, 0, 4, 0, 99})
+	in := make(chan int, 1)
+	p.StdinCh(in)
+
+	if done := p.RunNB(); done {
+		t.Fatalf("expected to block, but didn't")
+	}
+
+	in <- 666
+
+	if done := p.RunNB(); !done {
+		t.Fatalf("expected to finish, but didn't")
+	}
+
+	out := p.Stdout()
+	if !IntEq(out, []int{666}) {
+		t.Fatalf("expected [666], got %v", out)
+	}
 }
 
 func TestLTEQ(t *testing.T) {
@@ -66,25 +87,13 @@ func TestJumps(t *testing.T) {
 
 func testPuter(t *testing.T, mem []int, stdin []int, eval []int) {
 	t.Run(fmt.Sprintf("%v", mem), func(t *testing.T) {
-		p := Puter{mem: mem, stdin: stdin}
+		p := NewPuter(mem)
+		p.Stdin(stdin)
 		p.Run()
 
-		if !equals(p.stdout, eval) {
-			t.Fatalf("expected %v, got %v", eval, p.stdout)
+		val := p.Stdout()
+		if !IntEq(val, eval) {
+			t.Fatalf("expected %v, got %v", eval, val)
 		}
 	})
-}
-
-func equals(a, b []int) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	for i := 0; i < len(a); i++ {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-
-	return true
 }
