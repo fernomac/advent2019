@@ -11,7 +11,7 @@ func TestMath(t *testing.T) {
 			p := NewPuter(mem)
 			p.Run()
 
-			if !IntEq(p.mem, eval) {
+			if !mapeq(p.mem, eval) {
 				t.Fatalf("expected %v, got %v", eval, p.mem)
 			}
 		})
@@ -21,6 +21,20 @@ func TestMath(t *testing.T) {
 	test([]int{2, 3, 0, 3, 99}, []int{2, 3, 0, 6, 99})
 	test([]int{2, 4, 4, 5, 99, 0}, []int{2, 4, 4, 5, 99, 9801})
 	test([]int{1, 1, 1, 4, 99, 5, 6, 0, 99}, []int{30, 1, 1, 4, 2, 5, 6, 0, 99})
+}
+
+func mapeq(a map[int]int, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := 0; i < len(b); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
 }
 
 func TestIO(t *testing.T) {
@@ -83,6 +97,23 @@ func TestJumps(t *testing.T) {
 	testPuter(t, prog, []int{7}, []int{999})
 	testPuter(t, prog, []int{8}, []int{1000})
 	testPuter(t, prog, []int{9}, []int{1001})
+}
+
+func TestRBO(t *testing.T) {
+	{
+		prog := []int{109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99}
+		testPuter(t, prog, nil, prog)
+	}
+
+	{
+		prog := []int{1102, 34915192, 34915192, 7, 4, 7, 99, 0}
+		testPuter(t, prog, nil, []int{1219070632396864})
+	}
+
+	{
+		prog := []int{104, 1125899906842624, 99}
+		testPuter(t, prog, nil, []int{1125899906842624})
+	}
 }
 
 func testPuter(t *testing.T, mem []int, stdin []int, eval []int) {

@@ -18,6 +18,8 @@ var opcodes = func() map[int]op {
 		7: (*Puter).lt,
 		8: (*Puter).eq,
 
+		9: (*Puter).arb,
+
 		99: (*Puter).hcf,
 	}
 }()
@@ -124,6 +126,12 @@ func (p *Puter) eq(modes modeset) {
 	p.ip += 4
 }
 
+func (p *Puter) arb(modes modeset) {
+	off := p.readarg(0, modes)
+	p.rbo += off
+	p.ip += 2
+}
+
 func (p *Puter) hcf(modes modeset) {
 	p.state = done
 }
@@ -152,6 +160,9 @@ func (p *Puter) read(arg int, mode mode) int {
 	case positionMode:
 		return p.mem[arg]
 
+	case relativeMode:
+		return p.mem[p.rbo+arg]
+
 	default:
 		panic(fmt.Sprintf("bad read mode %v", mode))
 	}
@@ -161,6 +172,9 @@ func (p *Puter) write(arg int, mode mode, val int) {
 	switch mode {
 	case positionMode:
 		p.mem[arg] = val
+
+	case relativeMode:
+		p.mem[p.rbo+arg] = val
 
 	default:
 		panic(fmt.Sprintf("bad write mode %v", mode))

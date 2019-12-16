@@ -37,8 +37,9 @@ const (
 
 // A Puter is an intcode computer.
 type Puter struct {
-	mem []int
+	mem map[int]int
 	ip  int
+	rbo int
 
 	state    cpustate
 	blocking bool
@@ -50,8 +51,13 @@ type Puter struct {
 
 // NewPuter creates a new Puter.
 func NewPuter(prog Program) *Puter {
+	mem := map[int]int{}
+	for i, b := range prog {
+		mem[i] = b
+	}
+
 	return &Puter{
-		mem:   append([]int{}, prog...),
+		mem:   mem,
 		state: initial,
 	}
 }
@@ -137,14 +143,16 @@ type mode uint8
 const (
 	immediateMode mode = 1
 	positionMode  mode = 0
+	relativeMode  mode = 2
 )
 
 type modeset int
 
 func (m modeset) get(n int) mode {
 	temp := int(m)
-	if n > 0 {
-		temp /= (n * 10)
+	for n > 0 {
+		temp /= 10
+		n--
 	}
 	return mode(temp % 10)
 }
