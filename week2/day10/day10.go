@@ -23,7 +23,7 @@ func (t *try) stepFrom(x, y int) (int, int) {
 	dx := t.station.x - x
 	dy := t.station.y - y
 
-	div := gcd(dx, dy)
+	div := lib.Gcd(dx, dy)
 	if div == 0 {
 		return 0, 0
 	}
@@ -198,21 +198,4 @@ func main() {
 
 	targets := space.targets(where.x, where.y)
 	space.asplode(200, targets)
-}
-
-func gcd(a, b int) int {
-	if a < 0 {
-		a = -a
-	}
-	if b < 0 {
-		b = -b
-	}
-	return _gcd(a, b)
-}
-
-func _gcd(a, b int) int {
-	if b == 0 {
-		return a
-	}
-	return _gcd(b, a%b)
 }
