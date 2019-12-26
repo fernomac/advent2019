@@ -1,5 +1,13 @@
 package lib
 
+// Abs returns the absolute value of a.
+func Abs(a int) int {
+	if a < 0 {
+		return -a
+	}
+	return a
+}
+
 // Gcd computes the greatest common divisor of a and b.
 func Gcd(a, b int) int {
 	if a < 0 {
