@@ -89,6 +89,11 @@ func (p *Puter) Stdout() []int {
 	return p.stdoutbuf
 }
 
+// DropStdout drops any buffered stdout
+func (p *Puter) DropStdout() {
+	p.stdoutbuf = nil
+}
+
 // StdinCh sets the computer's input stream as a channel.
 func (p *Puter) StdinCh(ch <-chan int) {
 	p.stdin = ch
