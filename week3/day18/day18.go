@@ -1,13 +1,12 @@
 package main
 
 import (
-	"container/heap"
-	"container/list"
 	"fmt"
 	"math"
 	"strings"
 
 	"github.com/fernomac/advent2019/lib"
+	"github.com/fernomac/advent2019/lib/queue"
 )
 
 type point struct {
@@ -83,38 +82,15 @@ type move struct {
 	doors int
 }
 
-type movequeue struct {
-	q *list.List
-}
-
-func (q *movequeue) init() {
-	q.q = list.New()
-}
-
-func (q *movequeue) len() int {
-	return q.q.Len()
-}
-
-func (q *movequeue) push(m move) {
-	q.q.PushBack(m)
-}
-
-func (q *movequeue) pop() move {
-	f := q.q.Front()
-	q.q.Remove(f)
-	return f.Value.(move)
-}
-
 func (g *grid) moves(from point) []move {
 	ret := []move{}
 	visited := map[point]bool{}
 
-	queue := movequeue{}
-	queue.init()
-	queue.push(move{loc: from})
+	q := queue.New()
+	q.Push(move{loc: from})
 
-	for queue.len() > 0 {
-		ret = g.visit(&queue, visited, ret)
+	for q.Len() > 0 {
+		ret = g.visit(&q, visited, ret)
 	}
 
 	return ret
@@ -122,8 +98,8 @@ func (g *grid) moves(from point) []move {
 
 var dirs = []point{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
 
-func (g *grid) visit(queue *movequeue, visited map[point]bool, ret []move) []move {
-	cur := queue.pop()
+func (g *grid) visit(q *queue.Queue, visited map[point]bool, ret []move) []move {
+	cur := q.Pop().(move)
 
 	// If we've found a move that lands on a key, add it to ret.
 	if space := g.spaces[cur.loc]; space.tile == key {
@@ -155,7 +131,7 @@ func (g *grid) visit(queue *movequeue, visited map[point]bool, ret []move) []mov
 			next.doors |= space.id
 		}
 
-		queue.push(next)
+		q.Push(next)
 		visited[next.loc] = true
 	}
 
@@ -168,31 +144,8 @@ type path struct {
 	keyset int
 }
 
-type pathqueue struct {
-	items []path
-}
-
-func (q *pathqueue) Len() int {
-	return len(q.items)
-}
-
-func (q *pathqueue) Less(i, j int) bool {
-	return q.items[i].dist < q.items[j].dist
-}
-
-func (q *pathqueue) Swap(i, j int) {
-	q.items[i], q.items[j] = q.items[j], q.items[i]
-}
-
-func (q *pathqueue) Push(x interface{}) {
-	q.items = append(q.items, x.(path))
-}
-
-func (q *pathqueue) Pop() interface{} {
-	n := len(q.items)
-	p := q.items[n-1]
-	q.items = q.items[:n-1]
-	return p
+func (p path) Priority() int {
+	return p.dist
 }
 
 type state struct {
@@ -211,14 +164,13 @@ func (g *grid) traverse() int {
 	}
 
 	// Now find the optimal path using those moves.
-	pq := pathqueue{}
-	heap.Init(&pq)
-	heap.Push(&pq, path{loc: g.start})
+	pq := queue.NewPriority()
+	pq.Push(path{loc: g.start})
 
 	visited := map[state]bool{}
 
 	for {
-		cur := heap.Pop(&pq).(path)
+		cur := pq.Pop().(path)
 		if cur.keyset == g.keyset {
 			// We've found all the keys!
 			return cur.dist
@@ -247,7 +199,7 @@ func (g *grid) traverse() int {
 				dist:   cur.dist + move.dist,
 				keyset: cur.keyset | move.key,
 			}
-			heap.Push(&pq, next)
+			pq.Push(next)
 		}
 	}
 }

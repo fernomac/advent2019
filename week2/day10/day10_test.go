@@ -172,25 +172,3 @@ func TestOptimize(t *testing.T) {
 #.#.#.#####.####.###
 ###.##.####.##.#..##`, 210, point{11, 13})
 }
-
-func TestGCD(t *testing.T) {
-	if val := gcd(15, 10); val != 5 {
-		t.Errorf("gcd(15,10)==%v", val)
-	}
-
-	if val := gcd(10, 15); val != 5 {
-		t.Errorf("gcd(10,15)==%v", val)
-	}
-
-	if val := gcd(-10, 15); val != 5 {
-		t.Errorf("gcd(-10,15)==%v", val)
-	}
-
-	if val := gcd(10, -15); val != 5 {
-		t.Errorf("gcd(10,-15)==%v", val)
-	}
-
-	if val := gcd(-10, -15); val != 5 {
-		t.Errorf("gcd(-10,-15)==%v", val)
-	}
-}
