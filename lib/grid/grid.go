@@ -1,6 +1,8 @@
 package grid
 
-import "strings"
+import (
+	"strings"
+)
 
 // A Point on a grid.
 type Point struct {
@@ -21,9 +23,6 @@ func (p Point) Neighbors() []Point {
 type Node interface {
 	// ID returns the ID of this node.
 	ID() string
-
-	// Wall returns true if this node is a wall.
-	Wall() bool
 }
 
 // A Grid of points.
@@ -32,8 +31,19 @@ type Grid struct {
 	index map[string]Point
 }
 
-// ParseGrid parses a grid from text form.
-func ParseGrid(in string, nf func(Point, rune) Node) *Grid {
+// New directly creates a new grid.
+func New(grid map[Point]Node) *Grid {
+	index := map[string]Point{}
+	for p, n := range grid {
+		if n.ID() != "" {
+			index[n.ID()] = p
+		}
+	}
+	return &Grid{grid, index}
+}
+
+// Parse parses a grid from basic text form.
+func Parse(in string, nf func(Point, rune) Node) *Grid {
 	grid := map[Point]Node{}
 	index := map[string]Point{}
 
@@ -53,10 +63,27 @@ func ParseGrid(in string, nf func(Point, rune) Node) *Grid {
 
 // At returns the node at the given point.
 func (g *Grid) At(x, y int) Node {
-	return g.grid[Point{x, y}]
+	return g.AtPt(Point{x, y})
 }
 
 // AtPt returns the node at the given point.
 func (g *Grid) AtPt(p Point) Node {
 	return g.grid[p]
+}
+
+// Point returns the point with the given ID.
+func (g *Grid) Point(id string) (Point, bool) {
+	p, ok := g.index[id]
+	return p, ok
+}
+
+// NodesWhere returns the set of nodes that match the given predicate.
+func (g *Grid) NodesWhere(matches func(Node) bool) []Node {
+	ret := []Node{}
+	for _, n := range g.grid {
+		if matches(n) {
+			ret = append(ret, n)
+		}
+	}
+	return ret
 }
