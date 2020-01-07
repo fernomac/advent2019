@@ -16,6 +16,13 @@ func ASCIIfy(p *Puter) *ASCIIPuter {
 	return &ASCIIPuter{p, in, 0}
 }
 
+// Exec executes the given command and returns its output.
+func (a *ASCIIPuter) Exec(input string) string {
+	a.Input(input + "\n")
+	a.Run()
+	return a.Output()
+}
+
 // Run runs the puter until it wants more input.
 func (a *ASCIIPuter) Run() bool {
 	return a.p.RunNB()

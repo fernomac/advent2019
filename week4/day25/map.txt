@@ -1,0 +1,36 @@
+
+                kitchen  ---      corridor        ---   navigation
+              (monolith+)      (semiconductor+)      (prime number+)
+                   |                  |
+                sick bay              |
+    *         (giant emag-)           |
+    |                                 |
+checkpoint --- hallway                |
+                (jam+)                |
+                  |                   |
+                storage   ---    observatory
+                                  (photons-)
+                                      |
+                                    holodeck       ---   warp drive maintenance --- crew quarters
+                                  (infinite loop-)                                     (lava-)
+                                      |
+        passages      ---        hull breach
+        (mutex+)                      |
+            |                         |
+      engineering                     |
+            |                         |
+      science lab  ---  stables       |
+      (escape pod-)    (weather mch+) |
+            |                         |
+      gift wrap                       |
+      (polygon+)                      |
+                                      |
+                      arcade  --- hot choc.
+                                 (hologram+)
+
+
+photons: can't take, eaten by a grue
+infinite loop: what did you expect?
+molten lava: too hot
+escape pod: launched into space
+giant electromagnet: can't move
